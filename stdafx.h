@@ -11,20 +11,23 @@
 #include <list>
 #include <set>
 #include <map>
-
+#include <algorithm>
+#include <memory.h>
 
 // gl
-#define GLEW_STATIC
-#include <GL/glew.h>
+// #define GLEW_STATIC
+// #include <GL/glew.h>
+#include <GL/gl.h>
 #include <GL/glu.h>
 
 // qt
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QWidget>
-#include <QtWidgets/QOpenGLWidget>
+//#include <QtWidgets/QApplication>
+//#include <QtWidgets/QWidget>
+//#include <QtWidgets/QOpenGLWidget>
 
 // x
 #include <X11/Xlib.h>
+#include <X11/XKBlib.h>
 #include <GL/glx.h>
 
 

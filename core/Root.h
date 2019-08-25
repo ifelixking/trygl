@@ -11,24 +11,26 @@ class Root {
 private:
     Root();
     ~Root();
-    void init();
+    void init(int argc, char **argv);
     void destroy();
 
 public:
-    static void Init();
+    static void Init(int argc, char **argv);
     static void Destroy();
+    static int RunMainLoop();
     static Root * GetInstance() { return s_instance; }
 
-    class Application * CreateApplication(int argc, char ** argv);
-    void DestroyApplication(Application * application);
-
-    class RenderWindow * CreateRenderWindow(Application * application);
+    class RenderWindow * CreateRenderWindow();
     void DestroyRenderWindow(RenderWindow * renderWindow);
 
     void RenderOneFrame();
 
+    bool IsInvalidate() const;
+
 private:
     static Root * s_instance;
+    bool m_isInvalidate;
+    std::vector<RenderWindow *> m_renderWindows;
 };
 
 

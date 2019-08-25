@@ -4,16 +4,16 @@
 
 #include "../stdafx.h"
 #include "Root.h"
-#include "Application.h"
 #include "RenderWindow.h"
+#include "x/XAdapter.h"
 
-Root * Root::s_instance = nullptr;
+Root *Root::s_instance = nullptr;
 
-void Root::Init() {
+void Root::Init(int argc, char **argv) {
     if (s_instance) { return; }
-    Root * root = new Root;
+    Root *root = new Root;
     s_instance = root;
-    root->init();
+    root->init(argc, argv);
 }
 
 void Root::Destroy() {
@@ -23,29 +23,46 @@ void Root::Destroy() {
     s_instance = nullptr;
 }
 
-Root::Root() {}
+int Root::RunMainLoop() {
+    return XAdapter::RunMainLoop();
+}
+
+Root::Root() : m_isInvalidate(true) {}
 
 Root::~Root() {}
 
-void Root::init() {}
-void Root::destroy() {}
-
-void Root::RenderOneFrame(){}
-
-Application * Root::CreateApplication(int argc, char ** argv){
-    auto application = new Application(argc, argv);
-    return application;
+void Root::init(int argc, char **argv) {
+    XAdapter::Initialize(argc, argv);
 }
 
-void Root::DestroyApplication(Application * application){
-    delete application;
+void Root::destroy() {
+    XAdapter::Uninitialize();
 }
 
-RenderWindow * Root::CreateRenderWindow(Application * application){
-    auto renderWindow = new RenderWindow(application);
+void Root::RenderOneFrame() {
+    for (auto renderWindow : m_renderWindows) {
+        if (renderWindow->IsInvalidate()) {
+            renderWindow->Render();
+        }
+    }
+}
+
+RenderWindow *Root::CreateRenderWindow() {
+    auto renderWindow = new RenderWindow;
+    m_renderWindows.push_back(renderWindow);
     return renderWindow;
 }
 
 void Root::DestroyRenderWindow(RenderWindow *renderWindow) {
+    auto itorFind = std::find(m_renderWindows.begin(), m_renderWindows.end(), renderWindow);
+    if (itorFind == m_renderWindows.end()) { return; }
+    m_renderWindows.erase(itorFind);
     delete renderWindow;
+}
+
+bool Root::IsInvalidate() const {
+    for (auto renderWindow : m_renderWindows) {
+        if (renderWindow->IsInvalidate()) { return true; }
+    }
+    return false;
 }

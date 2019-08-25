@@ -11,7 +11,7 @@
 class RenderWindow {
 private:
     friend class Root;
-	explicit RenderWindow(class Application * application);
+	RenderWindow();
     ~RenderWindow();
 
 public:
@@ -19,8 +19,12 @@ public:
     class Viewport * AddViewport();
     void RemoveViewport(Viewport * viewport);
 
+    WINDOW_HANDLE GetHandle() const { return m_hWindow; }
+
+    void Render() const;
+    bool IsInvalidate() const;
+
 private:
-    Application * m_application;
     WINDOW_HANDLE m_hWindow;
 	std::vector<Viewport *> m_viewports;
 };

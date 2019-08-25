@@ -4,24 +4,22 @@
 
 #include "../stdafx.h"
 #include "RenderWindow.h"
-#include "Application.h"
 // #include "qt/QtAdapter.h"
 #include "x/XAdapter.h"
 #include "Viewport.h"
 
 #define ADAPTER XAdapter
 
-RenderWindow::RenderWindow(Application *application)
-		: m_application(application) {
-	m_hWindow = ADAPTER::CreateRenderWindow(application->GetHandle());
+RenderWindow::RenderWindow()  {
+	m_hWindow = ADAPTER::CreateRenderWindow();
 }
 
 RenderWindow::~RenderWindow() {
-	ADAPTER::DestroyRenderWindow(m_application->GetHandle(), m_hWindow);
+	ADAPTER::DestroyRenderWindow(m_hWindow);
 }
 
 void RenderWindow::Show() {
-	ADAPTER::WindowShow(m_application->GetHandle(), m_hWindow);
+	ADAPTER::WindowShow(m_hWindow);
 }
 
 class Viewport *RenderWindow::AddViewport() {
@@ -35,4 +33,12 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 	if (itorFind == m_viewports.end()) { return; }
 	delete viewport;
 	m_viewports.erase(itorFind);
+}
+
+void RenderWindow::Render() const {
+
+}
+
+bool RenderWindow::IsInvalidate() const {
+    return true;
 }

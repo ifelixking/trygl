@@ -4,23 +4,34 @@
 
 #include "../../stdafx.h"
 #include "XAdapter.h"
+#include "../Root.h"
 
 namespace XAdapter {
 
     struct APPLICATION {
         Display *display;
         Window windowRoot;
-        GLXFBConfig * fbConfig;
-        XVisualInfo * visualInfo;
+        GLXFBConfig *fbConfig;
+        XVisualInfo *visualInfo;
         GLXContext glContext;
+    } app;
+
+    struct WINDOW {
+        Window window;
+        Colormap colormap;
     };
 
-    APPLICATION_HANDLE CreateApplication(int argc, char **argv) {
+
+    void Initialize(int argc, char ** argv){
+        if (app.display) { return; }
+
         // connect to x server
-        auto displayName = getenv("DISPLAY"); assert(displayName);
-        auto display = XOpenDisplay(displayName); assert(display);
-        auto defaultScreen = DefaultScreen(display);
-        auto windowRoot = RootWindow(display, defaultScreen);
+        auto displayName = getenv("DISPLAY");
+        assert(displayName);
+        app.display = XOpenDisplay(displayName);
+        assert(app.display);
+        auto defaultScreen = DefaultScreen(app.display);
+        app.windowRoot = RootWindow(app.display, defaultScreen);
 
         // init opengl context
         int att[] = {
@@ -29,94 +40,98 @@ namespace XAdapter {
                 GLX_DEPTH_SIZE, 24,
                 None};
         int nelements;
-        auto fbConfig = glXChooseFBConfig(display, defaultScreen, att, &nelements); assert(fbConfig);
-        auto visualInfo = glXGetVisualFromFBConfig(display, *fbConfig); assert(visualInfo);
-        auto glContext = glXCreateNewContext(display, *fbConfig, GLX_RGBA_TYPE, 0, GL_TRUE);
-
-        auto app = (APPLICATION *) malloc(sizeof(APPLICATION));
-        app->display = display;
-        app->windowRoot = windowRoot;
-        app->fbConfig = fbConfig;
-        app->visualInfo = visualInfo;
-        app->glContext = glContext;
-
-        return app;
+        app.fbConfig = glXChooseFBConfig(app.display, defaultScreen, att, &nelements);
+        assert(app.fbConfig);
+        app.visualInfo = glXGetVisualFromFBConfig(app.display, *app.fbConfig);
+        assert(app.visualInfo);
+        app.glContext = glXCreateNewContext(app.display, *app.fbConfig, GLX_RGBA_TYPE, 0, GL_TRUE);
     }
 
-    void DestroyApplication(APPLICATION_HANDLE hApp){
-        auto app = (APPLICATION *)hApp;
-        if (glXGetCurrentContext() == app->glContext){
-            glXMakeCurrent(app->display, None, 0);
+    void Uninitialize(){
+        if (glXGetCurrentContext() == app.glContext) {
+            glXMakeCurrent(app.display, None, 0);
         }
-        glXDestroyContext(app->display, app->glContext);
-        XFree(app->fbConfig);
-        XFree(app->visualInfo);
-        XCloseDisplay(app->display);
-        free(app);
+        glXDestroyContext(app.display, app.glContext);
+        XFree(app.fbConfig);
+        XFree(app.visualInfo);
+        XCloseDisplay(app.display);
+        memset(&app, sizeof(APPLICATION), 0);
     }
 
-    int ApplicationStart(APPLICATION_HANDLE hApp){
-        auto app = (APPLICATION *)hApp;
+    int RunMainLoop(){
         for (;;) {
             XEvent event;
-            XNextEvent(app->display, &event);
+            // XNextEvent(app.display, &event);
+            if (XCheckMaskEvent(app.display, ExposureMask | KeyPressMask, &event)) {
+                switch (event.type) {
+                    // paint event
+                    case Expose:
+                        // render
+                        // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // loop break
-            if (event.type == KeyPress) { break; }
+                        // swap buffer
+                        // glXSwapBuffers(app.display, app.);
 
-            switch (event.type) {
-                // paint event
-                case Expose:
-                    // render
-                    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                        break;
+                    case KeyPress:
+                        auto keySys = XkbKeycodeToKeysym(app.display, event.xkey.keycode, 0,
+                                                         event.xkey.state & ShiftMask ? 1 : 0);
+                        if (keySys == XK_Escape) { goto L_EXIT; }
 
-                    // swap buffer
-                    // glXSwapBuffers(app->display, app->);
+                        // Root::GetInstance()->SetInvalidate();
 
-                    break;
+                        break;
+                }
+            } else {
+                if (Root::GetInstance()->IsInvalidate()) {
+                    Root::GetInstance()->RenderOneFrame();
+
+                    // auto win = (WINDOW *) hWin;
+                    // glXSwapBuffers(app.display, win->window);
+
+                } else {
+                    pthread_yield();
+                }
             }
         }
+        L_EXIT:
+        return 0;
     }
 
-    struct WINDOW {
-        Window window;
-        Colormap colormap;
-    };
-
-    WINDOW_HANDLE CreateRenderWindow(APPLICATION_HANDLE hApp) {
-        auto app = (APPLICATION *)hApp;
-
-        auto colorMap = XCreateColormap(app->display, app->windowRoot, app->visualInfo->visual, AllocNone);
+    WINDOW_HANDLE CreateRenderWindow() {
+        auto colorMap = XCreateColormap(app.display, app.windowRoot, app.visualInfo->visual, AllocNone);
         XSetWindowAttributes swa;
         swa.colormap = colorMap;
         swa.event_mask = ExposureMask | KeyPressMask;
         unsigned long valueMask = CWColormap | CWEventMask;
-        auto window = XCreateWindow(app->display, app->windowRoot, 100, 100, 320, 240, 0,
-                                    app->visualInfo->depth, InputOutput, app->visualInfo->visual,
+        auto window = XCreateWindow(app.display, app.windowRoot, 100, 100, 320, 240, 0,
+                                    app.visualInfo->depth, InputOutput, app.visualInfo->visual,
                                     valueMask, &swa);
-        XStoreName(app->display, window, "show me");
+        XStoreName(app.display, window, "show me");
 
-        auto win = (WINDOW *)malloc(sizeof(WINDOW));
+
+        auto win = (WINDOW *) malloc(sizeof(WINDOW));
         win->colormap = colorMap;
         win->window = window;
         return win;
     }
 
-    void DestroyRenderWindow(APPLICATION_HANDLE hApp, WINDOW_HANDLE hWin){
-        auto app = (APPLICATION *)hApp;
-        auto win = (WINDOW *)hWin;
-        if (glXGetCurrentDrawable() == win->window){
-            glXMakeCurrent(app->display, None, 0);
+    void DestroyRenderWindow(WINDOW_HANDLE hWin) {
+        auto win = (WINDOW *) hWin;
+        if (glXGetCurrentDrawable() == win->window) {
+            glXMakeCurrent(app.display, None, 0);
         }
-        XFreeColormap(app->display, win->colormap);
-        XDestroyWindow(app->display, win->window);
+        XFreeColormap(app.display, win->colormap);
+        XDestroyWindow(app.display, win->window);
     }
 
-    void WindowShow(APPLICATION_HANDLE hApp, WINDOW_HANDLE hWin){
-        auto app = (APPLICATION *)hApp;
-        auto win = (WINDOW *)hWin;
-        XMapWindow(app->display, win->window);
-        XFlush(app->display);   // force to show out
+    void WindowShow(WINDOW_HANDLE hWin) {
+        auto win = (WINDOW *) hWin;
+        XMapWindow(app.display, win->window);
+        XFlush(app.display);   // force to show out
+
+        auto result = glXMakeCurrent(app.display, win->window, app.glContext);
+        assert(result);
     }
 
 }
