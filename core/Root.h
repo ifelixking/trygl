@@ -20,7 +20,10 @@ public:
     static Root * GetInstance() { return s_instance; }
 
     class Application * CreateApplication(int argc, char ** argv);
-    class RenderWindow * CreateRenderWindow();
+    void DestroyApplication(Application * application);
+
+    class RenderWindow * CreateRenderWindow(Application * application);
+    void DestroyRenderWindow(RenderWindow * renderWindow);
 
     void RenderOneFrame();
 

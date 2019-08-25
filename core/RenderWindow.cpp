@@ -4,16 +4,35 @@
 
 #include "../stdafx.h"
 #include "RenderWindow.h"
-#include "qt/QtAdapter.h"
+#include "Application.h"
+// #include "qt/QtAdapter.h"
+#include "x/XAdapter.h"
+#include "Viewport.h"
 
-RenderWindow::RenderWindow(){
-    m_hWindow = QtAdapter::CreateRenderWindow();
+#define ADAPTER XAdapter
+
+RenderWindow::RenderWindow(Application *application)
+		: m_application(application) {
+	m_hWindow = ADAPTER::CreateRenderWindow(application->GetHandle());
 }
 
-RenderWindow::~RenderWindow(){
-    QtAdapter::DestroyRenderWindow(m_hWindow);
+RenderWindow::~RenderWindow() {
+	ADAPTER::DestroyRenderWindow(m_application->GetHandle(), m_hWindow);
 }
 
-void RenderWindow::Show(){
-    QtAdapter::WindowShow(m_hWindow);
+void RenderWindow::Show() {
+	ADAPTER::WindowShow(m_application->GetHandle(), m_hWindow);
+}
+
+class Viewport *RenderWindow::AddViewport() {
+	auto viewport = new Viewport;
+	m_viewports.push_back(viewport);
+	return viewport;
+}
+
+void RenderWindow::RemoveViewport(Viewport *viewport) {
+	auto itorFind = std::find(m_viewports.begin(), m_viewports.end(), viewport);
+	if (itorFind == m_viewports.end()) { return; }
+	delete viewport;
+	m_viewports.erase(itorFind);
 }

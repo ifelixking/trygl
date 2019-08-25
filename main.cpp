@@ -7,7 +7,10 @@ int main(int argc, char **argv) {
     Root::Init();
 
     auto app = Root::GetInstance()->CreateApplication(argc, argv);
-    auto win = Root::GetInstance()->CreateRenderWindow();
+    auto win = Root::GetInstance()->CreateRenderWindow(app);
+
+
+
     win->Show();
 
     GLenum err = glewInit();
@@ -18,6 +21,10 @@ int main(int argc, char **argv) {
     }
 
     auto exitCode = app->Start();
+
+
+    Root::GetInstance()->DestroyRenderWindow(win);
+    Root::GetInstance()->DestroyApplication(app);
 
     return exitCode;
 }

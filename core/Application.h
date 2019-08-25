@@ -9,11 +9,15 @@
 class Application {
 private:
     friend class Root;
-    Application(int argc, char ** argv);
+
+    Application(int argc, char **argv);
+
     ~Application();
 
 public:
     int Start();
+
+    APPLICATION_HANDLE GetHandle() const { return m_hApplication; }
 
 private:
     APPLICATION_HANDLE m_hApplication;

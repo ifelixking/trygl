@@ -6,17 +6,23 @@
 #define TRYGL_RENDERWINDOW_H
 
 
+#include "Viewport.h"
+
 class RenderWindow {
 private:
     friend class Root;
-    RenderWindow();
+	explicit RenderWindow(class Application * application);
     ~RenderWindow();
 
 public:
     void Show();
+    class Viewport * AddViewport();
+    void RemoveViewport(Viewport * viewport);
 
 private:
+    Application * m_application;
     WINDOW_HANDLE m_hWindow;
+	std::vector<Viewport *> m_viewports;
 };
 
 

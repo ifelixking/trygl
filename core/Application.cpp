@@ -4,16 +4,19 @@
 
 #include "../stdafx.h"
 #include "Application.h"
-#include "qt/QtAdapter.h"
+// #include "qt/QtAdapter.h"
+#include "x/XAdapter.h"
+
+#define ADAPTER XAdapter
 
 Application::Application(int argc, char **argv) {
-    m_hApplication = QtAdapter::CreateApplication(argc, argv);
+    m_hApplication = ADAPTER::CreateApplication(argc, argv);
 }
 
 Application::~Application() {
-    QtAdapter::DestroyApplication(m_hApplication);
+    ADAPTER::DestroyApplication(m_hApplication);
 }
 
 int Application::Start() {
-    QtAdapter::ApplicationStart(m_hApplication);
+    ADAPTER::ApplicationStart(m_hApplication);
 }

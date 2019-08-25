@@ -33,11 +33,19 @@ void Root::destroy() {}
 void Root::RenderOneFrame(){}
 
 Application * Root::CreateApplication(int argc, char ** argv){
-    Application * application = new Application(argc, argv);
+    auto application = new Application(argc, argv);
     return application;
 }
 
-RenderWindow * Root::CreateRenderWindow(){
-    RenderWindow * renderWindow = new RenderWindow;
+void Root::DestroyApplication(Application * application){
+    delete application;
+}
+
+RenderWindow * Root::CreateRenderWindow(Application * application){
+    auto renderWindow = new RenderWindow(application);
     return renderWindow;
+}
+
+void Root::DestroyRenderWindow(RenderWindow *renderWindow) {
+    delete renderWindow;
 }
