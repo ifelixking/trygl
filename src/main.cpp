@@ -3,7 +3,6 @@
 #include "core/RenderWindow.h"
 
 int main(int argc, char **argv) {
-
     Root::Init(argc, argv);
 
     auto win = Root::GetInstance()->CreateRenderWindow();
@@ -11,13 +10,6 @@ int main(int argc, char **argv) {
 
     win->Show();
     // win1->Show();
-
-//    GLenum err = glewInit();
-//    if (GLEW_OK != err) {
-//        /* Problem: glewInit failed, something is seriously wrong. */
-//        fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
-//        return -1;
-//    }
 
     auto exitCode = Root::RunMainLoop();
 

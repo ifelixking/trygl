@@ -13,10 +13,11 @@
 #include <map>
 #include <algorithm>
 #include <memory.h>
+#include <iostream>
 
 // gl
-// #define GLEW_STATIC
-// #include <GL/glew.h>
+#define GLEW_STATIC
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 

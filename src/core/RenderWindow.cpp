@@ -40,6 +40,9 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 }
 
 void RenderWindow::Render() const {
+
+	ADAPTER::WindowMakeCurrent(this->m_hWindow);
+
 	bool isRender = false;
 	for (auto viewport : m_viewports) {
 		if (viewport->IsInvalidate()) {
