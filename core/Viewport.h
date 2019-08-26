@@ -17,6 +17,10 @@ public:
 	class Layer * AddLayer();
 	void RemoveLayer(Layer * layer);
 
+	void Render() const;
+
+	bool IsInvalidate() const;
+
 private:
 	std::vector<Layer *> m_layers;
 };

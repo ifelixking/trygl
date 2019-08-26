@@ -10,11 +10,15 @@
 
 #define ADAPTER XAdapter
 
-RenderWindow::RenderWindow()  {
+RenderWindow::RenderWindow() {
 	m_hWindow = ADAPTER::CreateRenderWindow();
+	this->AddViewport();
 }
 
 RenderWindow::~RenderWindow() {
+	for (auto viewport : m_viewports) {
+		delete viewport;
+	}
 	ADAPTER::DestroyRenderWindow(m_hWindow);
 }
 
@@ -36,9 +40,16 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 }
 
 void RenderWindow::Render() const {
-
+	for (auto viewport : m_viewports) {
+		if (viewport->IsInvalidate()) {
+			viewport->Render();
+		}
+	}
 }
 
 bool RenderWindow::IsInvalidate() const {
-    return true;
+	for (auto viewport : m_viewports) {
+		if (viewport->IsInvalidate()) { return true; }
+	}
+	return false;
 }

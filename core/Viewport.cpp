@@ -25,3 +25,11 @@ void Viewport::RemoveLayer(Layer *layer) {
 	delete layer;
 	m_layers.erase(itorFind);
 }
+
+void Viewport::Render() const {
+
+}
+
+bool Viewport::IsInvalidate() const {
+	return true;
+}

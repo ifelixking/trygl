@@ -11,8 +11,6 @@ class Root {
 private:
     Root();
     ~Root();
-    void init(int argc, char **argv);
-    void destroy();
 
 public:
     static void Init(int argc, char **argv);
@@ -29,7 +27,6 @@ public:
 
 private:
     static Root * s_instance;
-    bool m_isInvalidate;
     std::vector<RenderWindow *> m_renderWindows;
 };
 
