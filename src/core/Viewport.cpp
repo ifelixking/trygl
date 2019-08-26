@@ -5,7 +5,7 @@
 #include "Viewport.h"
 #include "Layer.h"
 
-Viewport::Viewport() {
+Viewport::Viewport() : m_isInvalidate(true){
 
 }
 
@@ -27,9 +27,11 @@ void Viewport::RemoveLayer(Layer *layer) {
 }
 
 void Viewport::Render() const {
-
+	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	m_isInvalidate = false;
 }
 
 bool Viewport::IsInvalidate() const {
-	return true;
+	return m_isInvalidate;
 }

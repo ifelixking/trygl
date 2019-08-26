@@ -40,10 +40,15 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 }
 
 void RenderWindow::Render() const {
+	bool isRender = false;
 	for (auto viewport : m_viewports) {
 		if (viewport->IsInvalidate()) {
 			viewport->Render();
+			isRender = true;
 		}
+	}
+	if (isRender) {
+		ADAPTER::WindowSwapBuffer(this->m_hWindow);
 	}
 }
 

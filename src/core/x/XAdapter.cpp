@@ -22,7 +22,7 @@ namespace XAdapter {
     };
 
 
-    void Initialize(int argc, char ** argv){
+    void Initialize(int argc, char **argv) {
         if (app.display) { return; }
 
         // connect to x server
@@ -47,7 +47,7 @@ namespace XAdapter {
         app.glContext = glXCreateNewContext(app.display, *app.fbConfig, GLX_RGBA_TYPE, 0, GL_TRUE);
     }
 
-    void Uninitialize(){
+    void Uninitialize() {
         if (glXGetCurrentContext() == app.glContext) {
             glXMakeCurrent(app.display, None, 0);
         }
@@ -58,7 +58,7 @@ namespace XAdapter {
         memset(&app, sizeof(APPLICATION), 0);
     }
 
-    int RunMainLoop(){
+    int RunMainLoop() {
         for (;;) {
             XEvent event;
             // XNextEvent(app.display, &event);
@@ -132,6 +132,11 @@ namespace XAdapter {
 
         auto result = glXMakeCurrent(app.display, win->window, app.glContext);
         assert(result);
+    }
+
+    void WindowSwapBuffer(WINDOW_HANDLE hWin) {
+        auto win = (WINDOW *) hWin;
+        glXSwapBuffers(app.display, win->window);
     }
 
 }

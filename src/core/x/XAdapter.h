@@ -14,6 +14,7 @@ namespace XAdapter{
     WINDOW_HANDLE CreateRenderWindow();
     void DestroyRenderWindow(WINDOW_HANDLE hWin);
     void WindowShow(WINDOW_HANDLE hWin);
+    void WindowSwapBuffer(WINDOW_HANDLE hWin);
 }
 
 #endif //TRYGL_XADAPTER_H
