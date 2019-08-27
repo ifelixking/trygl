@@ -10,7 +10,8 @@
 
 #define ADAPTER XAdapter
 
-RenderWindow::RenderWindow() {
+RenderWindow::RenderWindow()
+		: m_windowInvalidate(true) {
 	m_hWindow = ADAPTER::CreateRenderWindow();
 	this->AddViewport();
 }
@@ -40,24 +41,22 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 }
 
 void RenderWindow::Render() const {
-
 	ADAPTER::WindowMakeCurrent(this->m_hWindow);
-
-	m_viewports.front()->Render();
-
-//	bool isRender = false;
-//	for (auto viewport : m_viewports) {
-//		if (viewport->IsInvalidate()) {
-//			viewport->Render();
-//			isRender = true;
-//		}
-//	}
-	// if (isRender) {
+	bool hasRender = false;
+	for (auto viewport : m_viewports) {
+		if (m_windowInvalidate || viewport->IsInvalidate()) {
+			viewport->Render();
+			hasRender = true;
+		}
+	}
+	if (hasRender) {
 		ADAPTER::WindowSwapBuffer(this->m_hWindow);
-	// }
+	}
+	m_windowInvalidate = false;
 }
 
 bool RenderWindow::IsInvalidate() const {
+	if (m_windowInvalidate) { return true; }
 	for (auto viewport : m_viewports) {
 		if (viewport->IsInvalidate()) { return true; }
 	}

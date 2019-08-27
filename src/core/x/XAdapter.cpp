@@ -21,11 +21,10 @@ namespace XAdapter {
 		int argc;
 		char **argv;
 		int fps;
+		WindowInvalidateHandle onWindowInvalidate;
 	} app;
 
-	struct WINDOW {
-		Window window;
-	};
+
 
 	void Initialize(const InitParams *params) {
 		if (app.display) { return; }
@@ -33,7 +32,9 @@ namespace XAdapter {
 		app.argc = params->argc;
 		app.argv = params->argv;
 		app.fps = params->fps;
-		app.eventMask = ExposureMask | KeyPressMask;		// event mask
+		app.onWindowInvalidate = params->onWindowInvalidate;
+
+		app.eventMask = ExposureMask | KeyPressMask;        // event mask
 
 		// get display name
 		auto displayName = getenv("DISPLAY");
@@ -86,11 +87,23 @@ namespace XAdapter {
 		XFree(app.fbConfig);
 		XFree(app.visualInfo);
 		XCloseDisplay(app.display);
-		memset(&app, sizeof(APPLICATION), 0);
+		memset(&app, 0, sizeof(APPLICATION));
 	}
 
-	void processEvent(XEvent event) {
-
+	bool processEvent(XEvent event) {
+		switch (event.type) {
+			case Expose:
+				app.onWindowInvalidate((WINDOW_HANDLE)event.xexpose.window);
+				break;
+			case KeyPress:
+				auto keySys = XkbKeycodeToKeysym(app.display, event.xkey.keycode, 0,
+												 (event.xkey.state & ShiftMask) ? 1 : 0);
+				if (keySys == XK_Escape) {
+					return true;
+				}
+				break;
+		}
+		return false;
 	}
 
 	int RunMainLoop() {
@@ -98,9 +111,10 @@ namespace XAdapter {
 		const auto MILLION = 1000000;
 		const auto THOUSAND = 1000;
 		const long int oneFrameMonoLimit = BILLION / app.fps;
+#define CHECK_EVENT_SLEEP_TIME 30000
 
 		// setting start time, and render the first frame
-		timespec lastRenderTime;
+		timespec lastRenderTime = {}, now = {};
 		auto iResult = clock_gettime(CLOCK_MONOTONIC, &lastRenderTime);
 		assert(iResult == 0);
 		Root::GetInstance()->RenderOneFrame(0);
@@ -110,23 +124,41 @@ namespace XAdapter {
 			XNextEvent(app.display, &event);            // block the thread
 
 			L_PROCESS_EVENT:
-			processEvent(event);
+			if (processEvent(event)) { break; }
 
-			timespec now;
 			iResult = clock_gettime(CLOCK_MONOTONIC, &now);
 			assert(iResult == 0);
 			auto timeSpan = (now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec - lastRenderTime.tv_nsec;
 
 			// render if time up
-			if (timeSpan >= oneFrameMonoLimit){
+			if (timeSpan >= oneFrameMonoLimit) {
 				Root::GetInstance()->RenderOneFrame(timeSpan);
 				lastRenderTime = now;
 			} else {
-				// check has event in queue
-				if (XCheckMaskEvent(app.display, app.eventMask, &event)) {
-					goto L_PROCESS_EVENT;
-				} else {
+				// loop: check event or do render if time out
+				for (;;) {
+					// if has event in queue then go to process them
+					if (XCheckMaskEvent(app.display, app.eventMask, &event)) {
+						goto L_PROCESS_EVENT;
+					} else {
+						// if no event in queue, check time out then render or wait
+						iResult = clock_gettime(CLOCK_MONOTONIC, &now);
+						assert(iResult == 0);
+						timeSpan = (now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec -
+								   lastRenderTime.tv_nsec;
+						if (timeSpan > oneFrameMonoLimit) {
+							Root::GetInstance()->RenderOneFrame(timeSpan);
+							lastRenderTime = now;
+							break;
+						}
 
+						// no event and not time out, then wait
+#if (CHECK_EVENT_SLEEP_TIME == 0)
+						pthread_yield();
+#else
+						usleep(CHECK_EVENT_SLEEP_TIME);
+#endif
+					}
 				}
 			}
 		}
@@ -144,35 +176,33 @@ namespace XAdapter {
 									valueMask, &swa);
 		// XMapWindow(app.display, window);
 		// XStoreName(app.display, window, "show me");
-		auto win = (WINDOW *) malloc(sizeof(WINDOW));
-		win->window = window;
-		return win;
+		return (WINDOW_HANDLE)window;
 	}
 
 	void DestroyRenderWindow(WINDOW_HANDLE hWin) {
-		auto win = (WINDOW *) hWin;
-		if (glXGetCurrentDrawable() == win->window) {
-			auto result = glXMakeCurrent(app.display, None, 0);
+		auto win = (Window) hWin;
+		if (glXGetCurrentDrawable() == win) {
+			auto result = glXMakeCurrent(app.display, None, nullptr);
 			assert(result);
 		}
-		XDestroyWindow(app.display, win->window);
+		XDestroyWindow(app.display, win);
 	}
 
 	void WindowShow(WINDOW_HANDLE hWin) {
-		auto win = (WINDOW *) hWin;
-		XMapWindow(app.display, win->window);
-		XStoreName(app.display, win->window, "show me");
+		auto win = (Window) hWin;
+		XMapWindow(app.display, win);
+		XStoreName(app.display, win, "show me");
 		XFlush(app.display);   // force to show out
 	}
 
 	void WindowSwapBuffer(WINDOW_HANDLE hWin) {
-		auto win = (WINDOW *) hWin;
-		glXSwapBuffers(app.display, win->window);
+		auto win = (Window) hWin;
+		glXSwapBuffers(app.display, win);
 	}
 
 	void WindowMakeCurrent(WINDOW_HANDLE hWin) {
-		auto win = (WINDOW *) hWin;
-		auto result = glXMakeCurrent(app.display, win->window, app.glContext);
+		auto win = (Window) hWin;
+		auto result = glXMakeCurrent(app.display, win, app.glContext);
 		assert(result);
 	}
 

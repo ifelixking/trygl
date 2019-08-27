@@ -26,8 +26,11 @@ public:
     bool IsInvalidate() const;
 
 private:
+	static void onWindowInvalidate(WINDOW_HANDLE hWin);
+
+private:
     static Root * s_instance;
-    std::vector<RenderWindow *> m_renderWindows;
+    std::map<WINDOW_HANDLE, RenderWindow *> m_renderWindows;
 };
 
 

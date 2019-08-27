@@ -23,10 +23,12 @@ public:
 
     void Render() const;
     bool IsInvalidate() const;
+    void SetInvalidate() { m_windowInvalidate = true; }
 
 private:
     WINDOW_HANDLE m_hWindow;
 	std::vector<Viewport *> m_viewports;
+	mutable bool m_windowInvalidate;
 };
 
 

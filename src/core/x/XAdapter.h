@@ -7,10 +7,12 @@
 
 namespace XAdapter{
 
+	typedef void (*WindowInvalidateHandle)(WINDOW_HANDLE win);
 	struct InitParams{
 		int argc;
 		char ** argv;
 		int fps;
+		WindowInvalidateHandle onWindowInvalidate;
 	};
     void Initialize(const InitParams * params);
     void Uninitialize();
