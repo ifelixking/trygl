@@ -15,124 +15,136 @@ namespace XAdapter {
 		GLXFBConfig *fbConfig;
 		XVisualInfo *visualInfo;
 		GLXContext glContext;
+		Colormap colormap;
+		long eventMask;
+
+		int argc;
+		char **argv;
+		int fps;
 	} app;
 
 	struct WINDOW {
 		Window window;
-		Colormap colormap;
 	};
 
-	void initGL() {
-		// if (app.glContext) { return; }
+	void Initialize(const InitParams *params) {
+		if (app.display) { return; }
 
-		// init opengl context
-//		app.glContext = glXCreateNewContext(app.display, *app.fbConfig, GLX_RGBA_TYPE, 0, GL_TRUE);
-//		assert(app.glContext);
+		app.argc = params->argc;
+		app.argv = params->argv;
+		app.fps = params->fps;
+		app.eventMask = ExposureMask | KeyPressMask;		// event mask
 
-		// init glew
-//		// create a temp window for init glew
-		auto windowTmp = (WINDOW *) CreateRenderWindow();
-		XMapWindow(app.display, windowTmp->window);
-		auto result = glXMakeCurrent(app.display, windowTmp->window, app.glContext); assert(result);
+		// get display name
+		auto displayName = getenv("DISPLAY");
+		assert(displayName);
+
+		// connect to x server
+		app.display = XOpenDisplay(displayName);
+		assert(app.display);
+
+		// get default screen
+		app.defaultScreen = DefaultScreen(app.display);
+
+		// get frame buffer configurations
+		int nelements, att[] = {GLX_RENDER_TYPE, GLX_RGBA_BIT, GLX_DOUBLEBUFFER, True, GLX_DEPTH_SIZE, 16, None};
+		app.fbConfig = glXChooseFBConfig(app.display, app.defaultScreen, att, &nelements);
+		assert(app.fbConfig);
+
+		// get visual info
+		app.visualInfo = glXGetVisualFromFBConfig(app.display, *app.fbConfig);
+		assert(app.visualInfo);
+
+		// get root window
+		app.windowRoot = RootWindow(app.display, app.defaultScreen);
+
+		// create colormap for create window
+		app.colormap = XCreateColormap(app.display, app.windowRoot, app.visualInfo->visual, AllocNone);
+
+		// create gl context
+		app.glContext = glXCreateNewContext(app.display, *app.fbConfig, GLX_RGBA_TYPE, 0, GL_TRUE);
+		assert(app.glContext);
+
+		// init glew use the root window
+		auto result = glXMakeCurrent(app.display, app.windowRoot, app.glContext);
+		assert(result);
 		GLenum err = glewInit();
 		assert(GLEW_OK == err);
-		// result = glXMakeCurrent(app.display, None, 0); assert(result);
-		// DestroyRenderWindow(windowTmp);
+		result = glXMakeCurrent(app.display, None, nullptr);
+		assert(result);
 	}
 
-	void uninitGL() {
+	void Uninitialize() {
 		if (!app.display) { return; }
+
 		if (glXGetCurrentContext() == app.glContext) {
 			auto result = glXMakeCurrent(app.display, None, 0);
 			assert(result);
 		}
 		glXDestroyContext(app.display, app.glContext);
+		XFreeColormap(app.display, app.colormap);
 		XFree(app.fbConfig);
 		XFree(app.visualInfo);
-		app.glContext = 0;
-	}
-
-	void Initialize(int argc, char **argv) {
-		if (app.display) { return; }
-
-		// connect to x server
-		auto displayName = getenv("DISPLAY");
-		assert(displayName);
-		app.display = XOpenDisplay(displayName);
-		assert(app.display);
-		app.defaultScreen = DefaultScreen(app.display);
-		app.windowRoot = RootWindow(app.display, app.defaultScreen);
-		int att[] = {
-				GLX_RENDER_TYPE, GLX_RGBA_BIT,
-				GLX_DOUBLEBUFFER, True,
-				GLX_DEPTH_SIZE, 24,
-				None};
-		int nelements;
-		app.fbConfig = glXChooseFBConfig(app.display, app.defaultScreen, att, &nelements);
-		assert(app.fbConfig);
-		app.visualInfo = glXGetVisualFromFBConfig(app.display, *app.fbConfig);
-		assert(app.visualInfo);
-
-		app.glContext = glXCreateNewContext(app.display, *app.fbConfig, GLX_RGBA_TYPE, 0, GL_TRUE);
-		assert(app.glContext);
-
-		initGL();
-	}
-
-	void Uninitialize() {
-		uninitGL();
 		XCloseDisplay(app.display);
 		memset(&app, sizeof(APPLICATION), 0);
 	}
 
+	void processEvent(XEvent event) {
+
+	}
+
 	int RunMainLoop() {
+		const auto BILLION = 1000000000;
+		const auto MILLION = 1000000;
+		const auto THOUSAND = 1000;
+		const long int oneFrameMonoLimit = BILLION / app.fps;
+
+		// setting start time, and render the first frame
+		timespec lastRenderTime;
+		auto iResult = clock_gettime(CLOCK_MONOTONIC, &lastRenderTime);
+		assert(iResult == 0);
+		Root::GetInstance()->RenderOneFrame(0);
+
 		for (;;) {
 			XEvent event;
-			// XNextEvent(app.display, &event);
-			if (XCheckMaskEvent(app.display, ExposureMask | KeyPressMask, &event)) {
-				switch (event.type) {
-					// paint event
-					case Expose:
-						// render
-						// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			XNextEvent(app.display, &event);            // block the thread
 
-						// swap buffer
-						// glXSwapBuffers(app.display, app.);
+			L_PROCESS_EVENT:
+			processEvent(event);
 
-						break;
-					case KeyPress:
-						auto keySys = XkbKeycodeToKeysym(app.display, event.xkey.keycode, 0,
-														 event.xkey.state & ShiftMask ? 1 : 0);
-						if (keySys == XK_Escape) { goto L_EXIT; }
+			timespec now;
+			iResult = clock_gettime(CLOCK_MONOTONIC, &now);
+			assert(iResult == 0);
+			auto timeSpan = (now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec - lastRenderTime.tv_nsec;
 
-						// Root::GetInstance()->SetInvalidate();
-
-						break;
-				}
+			// render if time up
+			if (timeSpan >= oneFrameMonoLimit){
+				Root::GetInstance()->RenderOneFrame(timeSpan);
+				lastRenderTime = now;
 			} else {
-				if (Root::GetInstance()->IsInvalidate()) {
-					Root::GetInstance()->RenderOneFrame();
+				// check has event in queue
+				if (XCheckMaskEvent(app.display, app.eventMask, &event)) {
+					goto L_PROCESS_EVENT;
 				} else {
-					pthread_yield();
+
 				}
 			}
 		}
-		L_EXIT:
-		return 0;
+
 	}
 
 	WINDOW_HANDLE CreateRenderWindow() {
-		auto colorMap = XCreateColormap(app.display, app.windowRoot, app.visualInfo->visual, AllocNone);
+
 		XSetWindowAttributes swa;
-		swa.colormap = colorMap;
-		swa.event_mask = ExposureMask | KeyPressMask;
+		swa.colormap = app.colormap;
+		swa.event_mask = app.eventMask;
 		unsigned long valueMask = CWColormap | CWEventMask;
 		auto window = XCreateWindow(app.display, app.windowRoot, 100, 100, 320, 240, 0,
 									app.visualInfo->depth, InputOutput, app.visualInfo->visual,
 									valueMask, &swa);
-		XStoreName(app.display, window, "show me");
+		// XMapWindow(app.display, window);
+		// XStoreName(app.display, window, "show me");
 		auto win = (WINDOW *) malloc(sizeof(WINDOW));
-		win->colormap = colorMap;
 		win->window = window;
 		return win;
 	}
@@ -143,7 +155,6 @@ namespace XAdapter {
 			auto result = glXMakeCurrent(app.display, None, 0);
 			assert(result);
 		}
-		XFreeColormap(app.display, win->colormap);
 		XDestroyWindow(app.display, win->window);
 	}
 
@@ -152,8 +163,6 @@ namespace XAdapter {
 		XMapWindow(app.display, win->window);
 		XStoreName(app.display, win->window, "show me");
 		XFlush(app.display);   // force to show out
-
-		// initGL();
 	}
 
 	void WindowSwapBuffer(WINDOW_HANDLE hWin) {

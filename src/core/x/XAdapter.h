@@ -7,7 +7,12 @@
 
 namespace XAdapter{
 
-    void Initialize(int argc, char ** argv);
+	struct InitParams{
+		int argc;
+		char ** argv;
+		int fps;
+	};
+    void Initialize(const InitParams * params);
     void Uninitialize();
     int RunMainLoop();
 

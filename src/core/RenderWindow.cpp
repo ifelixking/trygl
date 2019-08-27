@@ -43,16 +43,18 @@ void RenderWindow::Render() const {
 
 	ADAPTER::WindowMakeCurrent(this->m_hWindow);
 
-	bool isRender = false;
-	for (auto viewport : m_viewports) {
-		if (viewport->IsInvalidate()) {
-			viewport->Render();
-			isRender = true;
-		}
-	}
-	if (isRender) {
+	m_viewports.front()->Render();
+
+//	bool isRender = false;
+//	for (auto viewport : m_viewports) {
+//		if (viewport->IsInvalidate()) {
+//			viewport->Render();
+//			isRender = true;
+//		}
+//	}
+	// if (isRender) {
 		ADAPTER::WindowSwapBuffer(this->m_hWindow);
-	}
+	// }
 }
 
 bool RenderWindow::IsInvalidate() const {

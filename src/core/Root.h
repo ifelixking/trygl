@@ -21,7 +21,7 @@ public:
     class RenderWindow * CreateRenderWindow();
     void DestroyRenderWindow(RenderWindow * renderWindow);
 
-    void RenderOneFrame();
+    void RenderOneFrame(long int nanoseconds);
 
     bool IsInvalidate() const;
 

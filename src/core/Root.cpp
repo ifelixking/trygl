@@ -31,12 +31,13 @@ Root::Root() {}
 
 Root::~Root() {}
 
-void Root::RenderOneFrame() {
-	for (auto renderWindow : m_renderWindows) {
-		if (renderWindow->IsInvalidate()) {
-			renderWindow->Render();
-		}
-	}
+void Root::RenderOneFrame(long int nanoseconds) {
+	m_renderWindows.front()->Render();
+//	for (auto renderWindow : m_renderWindows) {
+//		if (renderWindow->IsInvalidate()) {
+//
+//		}
+//	}
 }
 
 RenderWindow *Root::CreateRenderWindow() {
