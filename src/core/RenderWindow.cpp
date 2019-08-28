@@ -13,6 +13,9 @@
 RenderWindow::RenderWindow()
 		: m_windowInvalidate(true) {
 	m_hWindow = ADAPTER::CreateRenderWindow();
+	int x, y; unsigned int w, h;
+	ADAPTER::GetWindowGeometry(m_hWindow, x, y, w, h);
+	m_width = w; m_height = h;
 	this->AddViewport();
 }
 
@@ -61,4 +64,17 @@ bool RenderWindow::IsInvalidate() const {
 		if (viewport->IsInvalidate()) { return true; }
 	}
 	return false;
+}
+
+void RenderWindow::onResize(int width, int height) {
+
+	for (auto viewport : m_viewports) {
+		Viewport::Info &info = viewport->m_info;
+		if (viewport->IsFullWindow()) {
+			info.winX = 0;
+			info.winY = 0;
+			info.winWidth = width;
+			info.winHeight = height;
+		}
+	}
 }

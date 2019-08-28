@@ -3,13 +3,11 @@
 #include "core/RenderWindow.h"
 
 int main(int argc, char **argv) {
+
     Root::Init(argc, argv);
 
     auto win = Root::GetInstance()->CreateRenderWindow();
-    // auto win1 = Root::GetInstance()->CreateRenderWindow(app);
-
     win->Show();
-    // win1->Show();
 
     auto exitCode = Root::RunMainLoop();
 

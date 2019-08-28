@@ -22,9 +22,8 @@ namespace XAdapter {
 		char **argv;
 		int fps;
 		WindowInvalidateHandle onWindowInvalidate;
+		WindowResizeHandle onWindowResize;
 	} app;
-
-
 
 	void Initialize(const InitParams *params) {
 		if (app.display) { return; }
@@ -33,8 +32,9 @@ namespace XAdapter {
 		app.argv = params->argv;
 		app.fps = params->fps;
 		app.onWindowInvalidate = params->onWindowInvalidate;
+		app.onWindowResize = params->onWindowResize;
 
-		app.eventMask = ExposureMask | KeyPressMask;        // event mask
+		app.eventMask = ExposureMask | KeyPressMask | ResizeRedirectMask;        // event mask
 
 		// get display name
 		auto displayName = getenv("DISPLAY");
@@ -93,7 +93,11 @@ namespace XAdapter {
 	bool processEvent(XEvent event) {
 		switch (event.type) {
 			case Expose:
-				app.onWindowInvalidate((WINDOW_HANDLE)event.xexpose.window);
+				app.onWindowInvalidate((WINDOW_HANDLE) event.xexpose.window);
+				break;
+			case ResizeRequest:
+				app.onWindowResize((WINDOW_HANDLE) event.xresizerequest.window, event.xresizerequest.width,
+								   event.xresizerequest.height);
 				break;
 			case KeyPress:
 				auto keySys = XkbKeycodeToKeysym(app.display, event.xkey.keycode, 0,
@@ -162,7 +166,7 @@ namespace XAdapter {
 				}
 			}
 		}
-
+		return 0;
 	}
 
 	WINDOW_HANDLE CreateRenderWindow() {
@@ -174,9 +178,7 @@ namespace XAdapter {
 		auto window = XCreateWindow(app.display, app.windowRoot, 100, 100, 320, 240, 0,
 									app.visualInfo->depth, InputOutput, app.visualInfo->visual,
 									valueMask, &swa);
-		// XMapWindow(app.display, window);
-		// XStoreName(app.display, window, "show me");
-		return (WINDOW_HANDLE)window;
+		return (WINDOW_HANDLE) window;
 	}
 
 	void DestroyRenderWindow(WINDOW_HANDLE hWin) {
@@ -203,6 +205,13 @@ namespace XAdapter {
 	void WindowMakeCurrent(WINDOW_HANDLE hWin) {
 		auto win = (Window) hWin;
 		auto result = glXMakeCurrent(app.display, win, app.glContext);
+		assert(result);
+	}
+
+	void GetWindowGeometry(WINDOW_HANDLE hWin, int &x, int &y, unsigned int &w, unsigned int &h) {
+		Window root;
+		unsigned int border, depth;
+		auto result = XGetGeometry(app.display, (Window)hWin, &root, &x, &y, &w, &h, &border, &depth);
 		assert(result);
 	}
 

@@ -11,7 +11,7 @@ Root *Root::s_instance = nullptr;
 
 void Root::Init(int argc, char **argv) {
 	if (s_instance) { return; }
-	XAdapter::InitParams params = {argc, argv, 30, &onWindowInvalidate};
+	XAdapter::InitParams params = {argc, argv, 30, &onWindowInvalidate, &onWindowResize};
 	XAdapter::Initialize(&params);
 
 	Root *root = new Root;
@@ -59,6 +59,13 @@ void Root::onWindowInvalidate(WINDOW_HANDLE hWin) {
 	auto itorFind = _this->m_renderWindows.find(hWin);
 	if (itorFind == _this->m_renderWindows.end()) { assert(false); return; }
 	itorFind->second->SetInvalidate();
+}
+
+void Root::onWindowResize(WINDOW_HANDLE hWin, unsigned int width, unsigned int height){
+	auto _this = Root::GetInstance();
+	auto itorFind = _this->m_renderWindows.find(hWin);
+	if (itorFind == _this->m_renderWindows.end()) { assert(false); return; }
+	itorFind->second->onResize(width, height);
 }
 
 bool Root::IsInvalidate() const {

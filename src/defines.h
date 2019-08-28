@@ -10,11 +10,7 @@ typedef void *APPLICATION_HANDLE;
 
 #ifndef DISABLE_LOG
 
-inline void _log(const char *msg) {
-	std::cout << msg << std::endl;
-}
-
-#define LOG(msg) _log(msg)
+#define LOG(msg) std::cout << msg << std::endl;
 #endif
 
 #endif //TRYGL_DEFINES_H

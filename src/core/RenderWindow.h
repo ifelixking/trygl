@@ -26,7 +26,12 @@ public:
     void SetInvalidate() { m_windowInvalidate = true; }
 
 private:
+	void onResize(int width, int height);
+
+private:
     WINDOW_HANDLE m_hWindow;
+    int m_width, m_height;
+
 	std::vector<Viewport *> m_viewports;
 	mutable bool m_windowInvalidate;
 };
