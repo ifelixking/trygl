@@ -13,9 +13,8 @@
 RenderWindow::RenderWindow()
 		: m_windowInvalidate(true) {
 	m_hWindow = ADAPTER::CreateRenderWindow();
-	int x, y; unsigned int w, h;
-	ADAPTER::GetWindowGeometry(m_hWindow, x, y, w, h);
-	m_width = w; m_height = h;
+	int x, y;
+	ADAPTER::GetWindowGeometry(m_hWindow, x, y, m_size.width, m_size.height);
 	this->AddViewport();
 }
 
@@ -30,8 +29,8 @@ void RenderWindow::Show() {
 	ADAPTER::WindowShow(m_hWindow);
 }
 
-class Viewport *RenderWindow::AddViewport() {
-	auto viewport = new Viewport;
+Viewport *RenderWindow::AddViewport() {
+	auto viewport = new Viewport(this);
 	m_viewports.push_back(viewport);
 	return viewport;
 }
@@ -45,16 +44,12 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 
 void RenderWindow::Render() const {
 	ADAPTER::WindowMakeCurrent(this->m_hWindow);
-	bool hasRender = false;
+	glClearColor(0.0f, 0.4f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for (auto viewport : m_viewports) {
-		if (m_windowInvalidate || viewport->IsInvalidate()) {
-			viewport->Render();
-			hasRender = true;
-		}
+		viewport->Render();
 	}
-	if (hasRender) {
-		ADAPTER::WindowSwapBuffer(this->m_hWindow);
-	}
+	ADAPTER::WindowSwapBuffer(this->m_hWindow);
 	m_windowInvalidate = false;
 }
 
@@ -66,8 +61,9 @@ bool RenderWindow::IsInvalidate() const {
 	return false;
 }
 
-void RenderWindow::onResize(int width, int height) {
-
+void RenderWindow::onResize(unsigned int width, unsigned int height) {
+	m_size.width = width;
+	m_size.height = height;
 	for (auto viewport : m_viewports) {
 		Viewport::Info &info = viewport->m_info;
 		if (viewport->IsFullWindow()) {
@@ -75,6 +71,7 @@ void RenderWindow::onResize(int width, int height) {
 			info.winY = 0;
 			info.winWidth = width;
 			info.winHeight = height;
+			viewport->m_isInvalidate = true;
 		}
 	}
 }

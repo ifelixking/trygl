@@ -28,6 +28,10 @@ public:
 
 	const Scene *GetScene() const { return m_scene; }
 
+	bool IsInvalidate()const;
+
+	void Render() const;
+
 private:
 	Camera *m_camera;
 	Scene *m_scene;

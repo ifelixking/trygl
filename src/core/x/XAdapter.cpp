@@ -34,7 +34,9 @@ namespace XAdapter {
 		app.onWindowInvalidate = params->onWindowInvalidate;
 		app.onWindowResize = params->onWindowResize;
 
-		app.eventMask = ExposureMask | KeyPressMask | ResizeRedirectMask;        // event mask
+		// keng: 不能监听ResizeRedirectMask事件，因为不知道如何写处理函数，它会导致窗口重回区域始终是初始大小
+		// 		 这里改为监听StructureNotifyMask事件，当窗口大小变化时也会触发它
+		app.eventMask = ExposureMask | KeyPressMask | StructureNotifyMask;        // event mask
 
 		// get display name
 		auto displayName = getenv("DISPLAY");
@@ -95,9 +97,9 @@ namespace XAdapter {
 			case Expose:
 				app.onWindowInvalidate((WINDOW_HANDLE) event.xexpose.window);
 				break;
-			case ResizeRequest:
-				app.onWindowResize((WINDOW_HANDLE) event.xresizerequest.window, event.xresizerequest.width,
-								   event.xresizerequest.height);
+			case ConfigureNotify:
+				app.onWindowResize((WINDOW_HANDLE) event.xconfigure.window, event.xconfigure.width,
+								   event.xconfigure.height);
 				break;
 			case KeyPress:
 				auto keySys = XkbKeycodeToKeysym(app.display, event.xkey.keycode, 0,
@@ -110,7 +112,7 @@ namespace XAdapter {
 		return false;
 	}
 
-	int RunMainLoop() {
+	int runMainLoopLimit() {
 		const auto BILLION = 1000000000;
 		const auto MILLION = 1000000;
 		const auto THOUSAND = 1000;
@@ -169,6 +171,38 @@ namespace XAdapter {
 		return 0;
 	}
 
+	int runMainLoopUnlimit() {
+		// setting start time, and render the first frame
+		timespec lastRenderTime = {}, now = {};
+		auto iResult = clock_gettime(CLOCK_MONOTONIC, &lastRenderTime);
+		assert(iResult == 0);
+		Root::GetInstance()->RenderOneFrame(0);
+
+		for (;;) {
+			XEvent event;
+			if (XCheckMaskEvent(app.display, app.eventMask, &event)) {
+				if (processEvent(event)) { break; }
+			} else {
+				iResult = clock_gettime(CLOCK_MONOTONIC, &now);
+				assert(iResult == 0);
+				auto timeSpan =
+						(now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec - lastRenderTime.tv_nsec;
+				Root::GetInstance()->RenderOneFrame(timeSpan);
+				lastRenderTime = now;
+				pthread_yield();
+			}
+		}
+		return 0;
+	}
+
+	int RunMainLoop() {
+		if (app.fps) {
+			return runMainLoopLimit();
+		} else {
+			return runMainLoopUnlimit();
+		}
+	}
+
 	WINDOW_HANDLE CreateRenderWindow() {
 
 		XSetWindowAttributes swa;
@@ -211,7 +245,7 @@ namespace XAdapter {
 	void GetWindowGeometry(WINDOW_HANDLE hWin, int &x, int &y, unsigned int &w, unsigned int &h) {
 		Window root;
 		unsigned int border, depth;
-		auto result = XGetGeometry(app.display, (Window)hWin, &root, &x, &y, &w, &h, &border, &depth);
+		auto result = XGetGeometry(app.display, (Window) hWin, &root, &x, &y, &w, &h, &border, &depth);
 		assert(result);
 	}
 

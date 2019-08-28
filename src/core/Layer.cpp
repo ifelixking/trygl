@@ -3,6 +3,7 @@
 //
 #include "../stdafx.h"
 #include "Layer.h"
+#include "Scene.h"
 
 Layer::Layer()
 		: m_scene(nullptr),
@@ -20,4 +21,18 @@ void Layer::SetScene(Scene *scene) {
 
 void Layer::SetCamera(Camera *camera) {
 	m_camera = camera;
+}
+
+bool Layer::IsInvalidate() const {
+	return true;
+}
+
+void Layer::Render() const {
+
+
+
+
+
+
+	m_scene->Render(m_camera);
 }

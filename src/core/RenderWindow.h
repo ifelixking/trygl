@@ -18,19 +18,22 @@ public:
     void Show();
     class Viewport * AddViewport();
     void RemoveViewport(Viewport * viewport);
+    const Viewport * GetViewport(unsigned long index) const { return m_viewports[index]; }
+	Viewport * GetViewport(unsigned long index) { return m_viewports[index]; }
 
     WINDOW_HANDLE GetHandle() const { return m_hWindow; }
 
     void Render() const;
     bool IsInvalidate() const;
     void SetInvalidate() { m_windowInvalidate = true; }
+	Sizeui GetSize() const { return m_size; }
 
 private:
-	void onResize(int width, int height);
+	void onResize(unsigned int width, unsigned int height);
 
 private:
     WINDOW_HANDLE m_hWindow;
-    int m_width, m_height;
+	Sizeui m_size;
 
 	std::vector<Viewport *> m_viewports;
 	mutable bool m_windowInvalidate;

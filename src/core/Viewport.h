@@ -11,7 +11,7 @@ class Viewport {
 private:
 	friend class RenderWindow;
 
-	Viewport();
+	Viewport(class RenderWindow *renderWindow);
 
 	~Viewport();
 
@@ -26,7 +26,7 @@ public:
 
 	bool IsFullWindow() const { return m_fullWindow; }
 
-	void SetFullWindow(bool value) { m_fullWindow = value; }
+	void SetFullWindow(bool value);
 
 	struct Info {
 		int winX;
@@ -35,11 +35,13 @@ public:
 		unsigned int winHeight;
 	};
 
+	// enable on not full window, and (0,0) is the left bottom corner
 	void Set(const Info &info);
 
 	const Info &Get(int &winX, int &winY, unsigned int &winWidth, unsigned int &winHeight) const { return m_info; }
 
 private:
+	RenderWindow *m_renderWindow;
 	std::vector<Layer *> m_layers;
 	mutable bool m_isInvalidate;
 	bool m_fullWindow;

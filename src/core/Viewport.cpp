@@ -4,10 +4,13 @@
 #include "../stdafx.h"
 #include "Viewport.h"
 #include "Layer.h"
+#include "RenderWindow.h"
 
-Viewport::Viewport() :
-		m_isInvalidate(true),
-		m_fullWindow(true) {
+Viewport::Viewport(RenderWindow *renderWindow) :
+		m_renderWindow(renderWindow),
+		m_isInvalidate(true) {
+	SetFullWindow(true);
+	auto layer = AddLayer();
 }
 
 Viewport::~Viewport() {
@@ -27,28 +30,33 @@ void Viewport::RemoveLayer(Layer *layer) {
 	m_layers.erase(itorFind);
 }
 
+void Viewport::SetFullWindow(bool value) {
+	m_fullWindow = value;
+	if (value) {
+		auto size = m_renderWindow->GetSize();
+		m_info.winX = 0;
+		m_info.winY = 0;
+		m_info.winWidth = size.width;
+		m_info.winX = size.height;
+	}
+}
+
 void Viewport::Render() const {
-
-	glViewport(0, 0, 320, 240);
-
-	glClearColor(0.0f, 0.4f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glColor3f(1.0f, 0.0f, 0.0f);
-	// glRectf(-1.0f, -1.0f, 1.5f, 1.5f);
-	glRectf(-0.5f, -0.5f, 0.5f, 0.5f);
-
-//	glBegin(GL_LINES);
-//	glVertex2f(0.0f, 0.0f);
-//	glVertex2f(0.3f, 0.5f);
-//	glEnd();
-
-
+	glViewport(m_info.winX, m_info.winY, m_info.winWidth, m_info.winHeight);
+	for (auto layer : m_layers) {
+		if (layer->IsInvalidate()) {
+			layer->Render();
+		}
+	}
 	m_isInvalidate = false;
 }
 
 bool Viewport::IsInvalidate() const {
-	return m_isInvalidate;
+	if (m_isInvalidate) { return true; }
+	for (auto layer : m_layers) {
+		if (layer->IsInvalidate()) { return true; }
+	}
+	return false;
 }
 
 void Viewport::Set(const Info &info) {

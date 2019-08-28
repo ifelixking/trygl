@@ -13,4 +13,6 @@ typedef void *APPLICATION_HANDLE;
 #define LOG(msg) std::cout << msg << std::endl;
 #endif
 
+#include "math/math.h"
+
 #endif //TRYGL_DEFINES_H
