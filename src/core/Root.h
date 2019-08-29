@@ -25,6 +25,8 @@ public:
 
     bool IsInvalidate() const;
 
+	class Scene * CreateScene();
+
 private:
 	static void onWindowInvalidate(WINDOW_HANDLE hWin);
 	static void onWindowResize(WINDOW_HANDLE hWin, unsigned int width, unsigned int height);

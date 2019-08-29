@@ -24,7 +24,7 @@ if(NOT OPENGL_FOUND)
 endif(NOT OPENGL_FOUND)
 
 add_executable(trygl src/main.cpp src/core/Root.cpp src/core/Root.h src/stdafx.cpp src/stdafx.h src/defines.h src/core/RenderWindow.cpp src/core/RenderWindow.h
-        src/core/x/XAdapter.cpp src/core/x/XAdapter.h src/core/Viewport.cpp src/core/Viewport.h src/core/Layer.cpp src/core/Layer.h src/core/Camera.cpp src/core/Camera.h src/core/Scene.cpp src/core/Scene.h src/math/math.h)
+        src/core/x/XAdapter.cpp src/core/x/XAdapter.h src/core/Viewport.cpp src/core/Viewport.h src/core/Layer.cpp src/core/Layer.h src/core/Camera.cpp src/core/Camera.h src/core/Scene.cpp src/core/Scene.h src/math/math.h src/core/Texture2D.cpp src/core/Texture2D.h)
 set_target_properties(trygl PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "src/stdafx.h")
 cotire(trygl)
 target_link_libraries(trygl GLEW ${OPENGL_LIBRARIES} Qt5Widgets Qt5Core Qt5Gui X11 GLX GL pthread)

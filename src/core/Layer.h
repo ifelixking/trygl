@@ -11,7 +11,7 @@ class Layer {
 private:
 	friend class Viewport;
 
-	Layer();
+	Layer(class Viewport * viewport);
 
 	~Layer();
 
@@ -33,8 +33,11 @@ public:
 	void Render() const;
 
 private:
+	Viewport * m_viewport;
 	Camera *m_camera;
 	Scene *m_scene;
+	unsigned int m_glTexture;
+	unsigned int m_glFBO;
 };
 
 

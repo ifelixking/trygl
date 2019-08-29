@@ -5,6 +5,7 @@
 #include "../stdafx.h"
 #include "Root.h"
 #include "RenderWindow.h"
+#include "Scene.h"
 #include "x/XAdapter.h"
 
 Root *Root::s_instance = nullptr;
@@ -73,4 +74,8 @@ bool Root::IsInvalidate() const {
 		if (pair.second->IsInvalidate()) { return true; }
 	}
 	return false;
+}
+
+Scene * Root::CreateScene(){
+	return new Scene;
 }

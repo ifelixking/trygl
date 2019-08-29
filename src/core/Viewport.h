@@ -38,7 +38,11 @@ public:
 	// enable on not full window, and (0,0) is the left bottom corner
 	void Set(const Info &info);
 
-	const Info &Get(int &winX, int &winY, unsigned int &winWidth, unsigned int &winHeight) const { return m_info; }
+	const Info &Get() const { return m_info; }
+
+	Layer *GetLayer(unsigned long index) { return m_layers[index]; }
+
+	const Layer *GetLayer(unsigned long index) const { return m_layers[index]; }
 
 private:
 	RenderWindow *m_renderWindow;
