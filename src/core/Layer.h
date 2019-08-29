@@ -33,11 +33,18 @@ public:
 	void Render() const;
 
 private:
+	void initFBO();
+	void onResize();
+
+private:
 	Viewport * m_viewport;
 	Camera *m_camera;
 	Scene *m_scene;
-	unsigned int m_glTexture;
 	unsigned int m_glFBO;
+	unsigned int m_glTexture;
+	unsigned int m_glRBODepth;
+
+
 };
 
 

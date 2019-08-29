@@ -18,7 +18,7 @@ Viewport::~Viewport() {
 }
 
 Layer *Viewport::AddLayer() {
-	auto layer = new Layer;
+	auto layer = new Layer(this);
 	m_layers.push_back(layer);
 	return layer;
 }
@@ -37,7 +37,7 @@ void Viewport::SetFullWindow(bool value) {
 		m_info.winX = 0;
 		m_info.winY = 0;
 		m_info.winWidth = size.width;
-		m_info.winX = size.height;
+		m_info.winHeight = size.height;
 	}
 }
 
@@ -62,4 +62,11 @@ bool Viewport::IsInvalidate() const {
 void Viewport::Set(const Info &info) {
 	if (m_fullWindow) { return; }
 	m_info = info;
+}
+
+void Viewport::SetSize(unsigned int winWidth, unsigned int winHeight) {
+	m_info.winWidth = winWidth;
+	m_info.winHeight = winHeight;
+	m_isInvalidate = true;
+	for (auto layer : m_layers) { layer->onResize(); }
 }

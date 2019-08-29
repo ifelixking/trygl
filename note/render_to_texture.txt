@@ -1,0 +1,51 @@
+
+
+// 创建 FBO
+glGenFramebuffers
+glBindFramebuffer GL_FRAMEBUFFER
+
+// 创建 texture, 将作为颜色 attachment
+GLuint texture;
+glGenTextures (1, &texture);
+glBindTexture (GL_TEXTURE_2D, texture);
+
+// 为 texture 分配内存空间 只需要大小，不需要数据
+glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+// 将 texture 关联到 fbo 的 颜色 attachment 上(除了颜色 还有 深度 和 模板 attachment)
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D, texture, 0);
+
+// 创建 rbo, 作为深度,模板attachment
+GLuint rbo;
+glGenRenderbuffers(1, &rbo);
+
+// 为 rbo 分配 内存空间
+glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+
+// 绑定 rbo 到 fbo
+glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+// 检验 fbo 是否 ok
+glCheckFramebufferStatus GL_FRAMEBUFFER_COMPLETE
+
+// 替换当前的 frame buffer 为 fbo
+glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+// 渲染 纹理中的场景
+render_scene_in_texture(){
+    需要 swap buffer
+}
+
+// 恢复到渲染到默认屏幕缓冲区
+glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+// 应用 纹理, 渲染 最终场景
+glBindTexture(GL_TEXTURE_2D, texture)
+render()
+swap buffer
+
+// 删除
+glDeleteFramebuffers(1, &fbo);

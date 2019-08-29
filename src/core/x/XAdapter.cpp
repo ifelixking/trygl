@@ -73,8 +73,10 @@ namespace XAdapter {
 		assert(result);
 		GLenum err = glewInit();
 		assert(GLEW_OK == err);
-		result = glXMakeCurrent(app.display, None, nullptr);
-		assert(result);
+		// TODO: 这里没有重置 current opengl context, 是为了保持 opengl context 有效, 能创建资源,
+		//  	 但这里使用的是RootWindow, 不知道有没有什么影响
+//		result = glXMakeCurrent(app.display, None, nullptr);
+//		assert(result);
 	}
 
 	void Uninitialize() {

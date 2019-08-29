@@ -44,6 +44,8 @@ public:
 
 	const Layer *GetLayer(unsigned long index) const { return m_layers[index]; }
 
+	void SetSize(unsigned int winWidth, unsigned int winHeight);
+
 private:
 	RenderWindow *m_renderWindow;
 	std::vector<Layer *> m_layers;

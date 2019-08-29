@@ -44,6 +44,7 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 
 void RenderWindow::Render() const {
 	ADAPTER::WindowMakeCurrent(this->m_hWindow);
+	// TODO: 使用了 Layer, 似乎可以不用在 RenderWindow 上 glClear 了
 	glClearColor(0.0f, 0.4f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	for (auto viewport : m_viewports) {
@@ -62,16 +63,15 @@ bool RenderWindow::IsInvalidate() const {
 }
 
 void RenderWindow::onResize(unsigned int width, unsigned int height) {
-	m_size.width = width;
-	m_size.height = height;
+	// resize 代价比较大, 如果w和h相同, 直接返回
+	const unsigned int finalWidth = width ? width : 1;
+	const unsigned int finalHeight = height ? height : 1;
+	if (m_size.width == finalWidth && m_size.height == finalHeight) { return; }
+	m_size.width = finalWidth;
+	m_size.height = finalHeight;
 	for (auto viewport : m_viewports) {
-		Viewport::Info &info = viewport->m_info;
 		if (viewport->IsFullWindow()) {
-			info.winX = 0;
-			info.winY = 0;
-			info.winWidth = width;
-			info.winHeight = height;
-			viewport->m_isInvalidate = true;
+			viewport->SetSize(width, height);
 		}
 	}
 }
