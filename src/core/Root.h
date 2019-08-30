@@ -9,31 +9,39 @@
 class Root {
 
 private:
-    Root();
-    ~Root();
+	Root();
+
+	~Root();
 
 public:
-    static void Init(int argc, char **argv);
-    static void Destroy();
-    static int RunMainLoop();
-    static Root * GetInstance() { return s_instance; }
+	static void Init(int argc, char **argv);
 
-    class RenderWindow * CreateRenderWindow();
-    void DestroyRenderWindow(RenderWindow * renderWindow);
+	static void Destroy();
 
-    void RenderOneFrame(long int nanoseconds);
+	static int RunMainLoop();
 
-    bool IsInvalidate() const;
+	static Root *GetInstance() { return s_instance; }
 
-	class Scene * CreateScene();
+	class RenderWindow *CreateRenderWindow();
+
+	void DestroyRenderWindow(RenderWindow *renderWindow);
+
+	// nanoSpan: time span from last render
+	// nanoframeTimeLimit: suggest render time limit
+	void RenderOneFrame(long int nanoSpan, long int nanoframeTimeLimit = INT64_MAX);
+
+	bool IsInvalidate() const;
+
+	class Scene *CreateScene();
 
 private:
 	static void onWindowInvalidate(WINDOW_HANDLE hWin);
+
 	static void onWindowResize(WINDOW_HANDLE hWin, unsigned int width, unsigned int height);
 
 private:
-    static Root * s_instance;
-    std::map<WINDOW_HANDLE, RenderWindow *> m_renderWindows;
+	static Root *s_instance;
+	std::map<WINDOW_HANDLE, RenderWindow *> m_renderWindows;
 };
 
 

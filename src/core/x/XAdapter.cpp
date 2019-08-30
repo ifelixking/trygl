@@ -8,6 +8,10 @@
 
 namespace XAdapter {
 
+	static const auto BILLION = 1000000000;
+	static const auto MILLION = 1000000;
+	static const auto THOUSAND = 1000;
+
 	struct APPLICATION {
 		Display *display;
 		Window windowRoot;
@@ -37,6 +41,14 @@ namespace XAdapter {
 		// keng: 不能监听ResizeRedirectMask事件，因为不知道如何写处理函数，它会导致窗口重回区域始终是初始大小
 		// 		 这里改为监听StructureNotifyMask事件，当窗口大小变化时也会触发它
 		app.eventMask = ExposureMask | KeyPressMask | StructureNotifyMask;        // event mask
+		// StructureNotifyMask:
+		//		CirculateNotify	XCirculateEvent
+		//		ConfigureNotify	XConfigureEvent
+		//		DestroyNotify	XDestroyWindowEvent
+		//		GravityNotify	XGravityEvent
+		//		MapNotify	XMapEvent
+		//		ReparentNotify	XReparentEvent
+		//		UnmapNotify	XUnmapEvent
 
 		// get display name
 		auto displayName = getenv("DISPLAY");
@@ -94,7 +106,7 @@ namespace XAdapter {
 		memset(&app, 0, sizeof(APPLICATION));
 	}
 
-	bool processEvent(XEvent event) {
+	static bool processEvent(XEvent event) {
 		switch (event.type) {
 			case Expose:
 				app.onWindowInvalidate((WINDOW_HANDLE) event.xexpose.window);
@@ -114,66 +126,43 @@ namespace XAdapter {
 		return false;
 	}
 
-	int runMainLoopLimit() {
-		const auto BILLION = 1000000000;
-		const auto MILLION = 1000000;
-		const auto THOUSAND = 1000;
-		const long int oneFrameMonoLimit = BILLION / app.fps;
-#define CHECK_EVENT_SLEEP_TIME 30000
+	static int runMainLoopByEventDrive() {
+		const long int oneFrameMonoLimit = BILLION / (app.fps == 0 ? 1 : app.fps);
 
-		// setting start time, and render the first frame
+		// save start time
 		timespec lastRenderTime = {}, now = {};
 		auto iResult = clock_gettime(CLOCK_MONOTONIC, &lastRenderTime);
 		assert(iResult == 0);
-		Root::GetInstance()->RenderOneFrame(0);
+
+		long int timeSpan = 0;
 
 		for (;;) {
+			// process all event in queue
 			XEvent event;
 			XNextEvent(app.display, &event);            // block the thread
-
-			L_PROCESS_EVENT:
 			if (processEvent(event)) { break; }
+			DoEvent();
 
+			// render
+			Root::GetInstance()->RenderOneFrame(timeSpan);
+
+			// calc time span from last render
 			iResult = clock_gettime(CLOCK_MONOTONIC, &now);
 			assert(iResult == 0);
-			auto timeSpan = (now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec - lastRenderTime.tv_nsec;
+			timeSpan = (now.tv_sec - lastRenderTime.tv_sec) * BILLION + now.tv_nsec - lastRenderTime.tv_nsec;
+			lastRenderTime = now;
 
-			// render if time up
-			if (timeSpan >= oneFrameMonoLimit) {
-				Root::GetInstance()->RenderOneFrame(timeSpan);
-				lastRenderTime = now;
-			} else {
-				// loop: check event or do render if time out
-				for (;;) {
-					// if has event in queue then go to process them
-					if (XCheckMaskEvent(app.display, app.eventMask, &event)) {
-						goto L_PROCESS_EVENT;
-					} else {
-						// if no event in queue, check time out then render or wait
-						iResult = clock_gettime(CLOCK_MONOTONIC, &now);
-						assert(iResult == 0);
-						timeSpan = (now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec -
-								   lastRenderTime.tv_nsec;
-						if (timeSpan > oneFrameMonoLimit) {
-							Root::GetInstance()->RenderOneFrame(timeSpan);
-							lastRenderTime = now;
-							break;
-						}
-
-						// no event and not time out, then wait
-#if (CHECK_EVENT_SLEEP_TIME == 0)
-						pthread_yield();
-#else
-						usleep(CHECK_EVENT_SLEEP_TIME);
-#endif
-					}
-				}
+			// have a rest if time span less then the limit
+			if (app.fps && oneFrameMonoLimit > timeSpan) {
+				auto usPadding = (oneFrameMonoLimit - timeSpan) / THOUSAND;
+				if (usPadding) { usleep(usPadding); }
+				timeSpan = oneFrameMonoLimit;        // TODO: sleep 真正的时间可能比 usPadding 要长
 			}
 		}
 		return 0;
 	}
 
-	int runMainLoopUnlimit() {
+	static int runMainLoopOnRealtime() {
 		// setting start time, and render the first frame
 		timespec lastRenderTime = {}, now = {};
 		auto iResult = clock_gettime(CLOCK_MONOTONIC, &lastRenderTime);
@@ -188,7 +177,7 @@ namespace XAdapter {
 				iResult = clock_gettime(CLOCK_MONOTONIC, &now);
 				assert(iResult == 0);
 				auto timeSpan =
-						(now.tv_sec - lastRenderTime.tv_sec) * 1000000000 + now.tv_nsec - lastRenderTime.tv_nsec;
+						(now.tv_sec - lastRenderTime.tv_sec) * BILLION + now.tv_nsec - lastRenderTime.tv_nsec;
 				Root::GetInstance()->RenderOneFrame(timeSpan);
 				lastRenderTime = now;
 				pthread_yield();
@@ -199,9 +188,9 @@ namespace XAdapter {
 
 	int RunMainLoop() {
 		if (app.fps) {
-			return runMainLoopLimit();
+			return runMainLoopByEventDrive();
 		} else {
-			return runMainLoopUnlimit();
+			return runMainLoopOnRealtime();
 		}
 	}
 
@@ -251,4 +240,18 @@ namespace XAdapter {
 		assert(result);
 	}
 
+	bool HasEventInQueue() {
+		// 返回事件队列中的事件数, QueuedAlready: 表示只监视已如列的事件, 不会再尝试刷新动作
+		auto eventCount = XEventsQueued(app.display, QueuedAlready);
+		return eventCount > 0;
+	}
+
+	void DoEvent() {
+		XEvent event;
+		for (;;) {
+			if (XCheckMaskEvent(app.display, app.eventMask, &event)) {
+				processEvent(event);
+			} else { return; }
+		}
+	}
 }

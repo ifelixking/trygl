@@ -34,7 +34,7 @@ Root::Root() {}
 
 Root::~Root() {}
 
-void Root::RenderOneFrame(long int nanoseconds) {
+void Root::RenderOneFrame(long int nanoSpan, long int nanoframeTimeLimit) {
 	for (auto pair : m_renderWindows) {
 		if (pair.second->IsInvalidate()) {
 			pair.second->Render();

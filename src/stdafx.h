@@ -5,6 +5,7 @@
 #ifndef TRYGL_STDAFX_H
 #define TRYGL_STDAFX_H
 
+// std
 #include <cassert>
 #include <string>
 #include <vector>
@@ -14,6 +15,7 @@
 #include <algorithm>
 #include <memory.h>
 #include <iostream>
+#include <limits>
 
 // gl
 #define GLEW_STATIC
