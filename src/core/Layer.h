@@ -6,10 +6,13 @@
 #define TRYGL_LAYER_H
 
 
+#include "Scene.h"
+
 class Layer {
 
 private:
 	friend class Viewport;
+	friend class Root;
 
 	Layer(class Viewport * viewport);
 
@@ -28,9 +31,10 @@ public:
 
 	const Scene *GetScene() const { return m_scene; }
 
-	bool IsInvalidate()const;
+	bool IsDirty()const;
 
-	void Render() const;
+
+	RENDER_FRAME_STATUS Render(bool newFrame) const;
 
 private:
 	void initFBO();
@@ -38,13 +42,16 @@ private:
 
 private:
 	Viewport * m_viewport;
-	Camera *m_camera;
-	Scene *m_scene;
+
 	unsigned int m_glFBO;
 	unsigned int m_glTexture;
 	unsigned int m_glRBODepth;
 
+	Camera *m_camera;
+	Scene *m_scene;
+	mutable Scene::RenderPosition m_sceneRP;
 
+	bool m_isDirty;
 };
 
 

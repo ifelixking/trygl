@@ -9,7 +9,8 @@
 Layer::Layer(Viewport *viewport)
 		: m_scene(nullptr),
 		  m_camera(nullptr),
-		  m_viewport(viewport) {
+		  m_viewport(viewport),
+		  m_isDirty(true) {
 	initFBO();
 }
 
@@ -80,38 +81,20 @@ void Layer::SetCamera(Camera *camera) {
 	m_camera = camera;
 }
 
-bool Layer::IsInvalidate() const {
-	return true;
+bool Layer::IsDirty() const {
+	// TODO: 还有 scene 和 camera 的 dirty
+	return m_isDirty;
 }
 
-void Layer::Render() const {
+RENDER_FRAME_STATUS Layer::Render(bool newFrame) const {
 	// render scene to the fbo(即: texture)
 	glBindFramebuffer(GL_FRAMEBUFFER, m_glFBO);
-
-	glClearColor(0.4f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	m_scene->Render(m_camera);
-
-	// render a rect with texture
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, m_glTexture);
-
-	const float size = 0.9f;
-
-	glBegin(GL_QUADS);
-	{
-		glTexCoord2f(0, 0);
-		glVertex2f(-size, -size);
-		glTexCoord2f(0, 1.0);
-		glVertex2f(-size, size);
-		glTexCoord2f(1.0, 1.0);
-		glVertex2f(size, size);
-		glTexCoord2f(1.0, 0);
-		glVertex2f(size, -size);
+	glEnable(GL_DEPTH_TEST);
+	if (newFrame) {
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
-	glEnd();
+	return m_scene->Render(newFrame, m_sceneRP, m_camera);
 }
 
 void Layer::onResize() {
@@ -141,4 +124,6 @@ void Layer::onResize() {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, old_fboDraw);
 	glBindTexture(GL_TEXTURE_2D, old_texture);
 	glBindRenderbuffer(GL_RENDERBUFFER, old_rbo);
+
+	m_isDirty = true;
 }

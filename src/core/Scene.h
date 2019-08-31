@@ -13,7 +13,16 @@ private:
 	~Scene();
 
 public:
-	void Render(class Camera * camera);
+	struct RenderPosition{
+		int lastX;
+		int lastY;
+	};
+
+	// newFrame: 是否从头渲染场景
+	// start[in,out]: 场景渲染起点, 返回下次渲染起点
+	RENDER_FRAME_STATUS Render(bool newFrame, RenderPosition & start, class Camera * camera);
+
+private:
 };
 
 

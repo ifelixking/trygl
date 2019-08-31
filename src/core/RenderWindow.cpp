@@ -42,22 +42,25 @@ void RenderWindow::RemoveViewport(Viewport *viewport) {
 	m_viewports.erase(itorFind);
 }
 
-void RenderWindow::Render() const {
-	ADAPTER::WindowMakeCurrent(this->m_hWindow);
-	// TODO: 使用了 Layer, 似乎可以不用在 RenderWindow 上 glClear 了
-	glClearColor(0.0f, 0.4f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	for (auto viewport : m_viewports) {
-		viewport->Render();
-	}
-	ADAPTER::WindowSwapBuffer(this->m_hWindow);
-	m_windowInvalidate = false;
-}
+//void RenderWindow::Render(long int nanoLimit) const {
+//	ADAPTER::WindowMakeCurrent(this->m_hWindow);
+//
+//	// TODO: 使用了 Layer, 似乎可以不用在 RenderWindow 上 glClear 了
+////	glClearColor(0.0f, 0.4f, 0.0f, 1.0f);
+////	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//	for (auto viewport : m_viewports) {
+//		viewport->Render();
+//	}
+//
+//	ADAPTER::WindowSwapBuffer(this->m_hWindow);
+//	m_windowInvalidate = false;
+//}
 
 bool RenderWindow::IsInvalidate() const {
 	if (m_windowInvalidate) { return true; }
 	for (auto viewport : m_viewports) {
-		if (viewport->IsInvalidate()) { return true; }
+		if (viewport->IsDirty()) { return true; }
 	}
 	return false;
 }

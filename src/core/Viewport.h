@@ -11,6 +11,8 @@ class Viewport {
 private:
 	friend class RenderWindow;
 
+	friend class Root;
+
 	Viewport(class RenderWindow *renderWindow);
 
 	~Viewport();
@@ -20,9 +22,9 @@ public:
 
 	void RemoveLayer(Layer *layer);
 
-	void Render() const;
+	// void Render() const;
 
-	bool IsInvalidate() const;
+	bool IsDirty() const;
 
 	bool IsFullWindow() const { return m_fullWindow; }
 
@@ -44,12 +46,16 @@ public:
 
 	const Layer *GetLayer(unsigned long index) const { return m_layers[index]; }
 
+	std::vector<Layer *> &GetLayers() { return m_layers; }
+
+	const std::vector<Layer *> &GetLayers() const { return m_layers; }
+
 	void SetSize(unsigned int winWidth, unsigned int winHeight);
 
 private:
 	RenderWindow *m_renderWindow;
 	std::vector<Layer *> m_layers;
-	mutable bool m_isInvalidate;
+	mutable bool m_isDirty;
 	bool m_fullWindow;
 	Info m_info;
 };

@@ -30,7 +30,7 @@ public:
 	// nanoframeTimeLimit: suggest render time limit
 	void RenderOneFrame(long int nanoSpan, long int nanoframeTimeLimit = INT64_MAX);
 
-	bool IsInvalidate() const;
+	bool IsDirty() const;
 
 	class Scene *CreateScene();
 
@@ -39,9 +39,12 @@ private:
 
 	static void onWindowResize(WINDOW_HANDLE hWin, unsigned int width, unsigned int height);
 
+	RENDER_FRAME_STATUS doRenderOneFrame(bool newFrame);
+
 private:
 	static Root *s_instance;
 	std::map<WINDOW_HANDLE, RenderWindow *> m_renderWindows;
+	bool m_lastRenderFrameComplete;
 };
 
 

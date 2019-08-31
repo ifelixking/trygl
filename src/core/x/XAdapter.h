@@ -28,7 +28,7 @@ namespace XAdapter{
 	void GetWindowGeometry(WINDOW_HANDLE hWin, int &x, int &y, unsigned int &w, unsigned int &h);
 	bool HasEventInQueue();
 	// 处理完 event queue 中的所有 event
-	void DoEvent();
+	bool DoEvent();
 }
 
 #endif //TRYGL_XADAPTER_H

@@ -1,1 +1,5 @@
 Viewport support z-index
+
+move the loop render code to Root, for inline the for-loop
+
+考虑一种复杂的情况, 有的layer没有渲染完是因为事件产生, 但事件并没有造成 它的 dirty, 应该可以保留之前的渲染成果

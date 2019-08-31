@@ -10,29 +10,42 @@
 
 class RenderWindow {
 private:
-    friend class Root;
+	friend class Root;
+
 	RenderWindow();
-    ~RenderWindow();
+
+	~RenderWindow();
 
 public:
-    void Show();
-    class Viewport * AddViewport();
-    void RemoveViewport(Viewport * viewport);
-    const Viewport * GetViewport(unsigned long index) const { return m_viewports[index]; }
-	Viewport * GetViewport(unsigned long index) { return m_viewports[index]; }
+	void Show();
 
-    WINDOW_HANDLE GetHandle() const { return m_hWindow; }
+	class Viewport *AddViewport();
 
-    void Render() const;
-    bool IsInvalidate() const;
-    void SetInvalidate() { m_windowInvalidate = true; }
+	void RemoveViewport(Viewport *viewport);
+
+	const Viewport *GetViewport(unsigned long index) const { return m_viewports[index]; }
+
+	Viewport *GetViewport(unsigned long index) { return m_viewports[index]; }
+
+	std::vector<Viewport *> &GetViewports() { return m_viewports; }
+
+	const std::vector<Viewport *> &GetViewports() const { return m_viewports; }
+
+	WINDOW_HANDLE GetHandle() const { return m_hWindow; }
+
+	// void Render(long int nanoLimit) const;
+
+	bool IsInvalidate() const;
+
+	void SetInvalidate() { m_windowInvalidate = true; }
+
 	Sizeui GetSize() const { return m_size; }
 
 private:
 	void onResize(unsigned int width, unsigned int height);
 
 private:
-    WINDOW_HANDLE m_hWindow;
+	WINDOW_HANDLE m_hWindow;
 	Sizeui m_size;
 
 	std::vector<Viewport *> m_viewports;

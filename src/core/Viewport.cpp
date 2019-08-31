@@ -8,7 +8,7 @@
 
 Viewport::Viewport(RenderWindow *renderWindow) :
 		m_renderWindow(renderWindow),
-		m_isInvalidate(true) {
+		m_isDirty(true) {
 	SetFullWindow(true);
 	auto layer = AddLayer();
 }
@@ -41,20 +41,10 @@ void Viewport::SetFullWindow(bool value) {
 	}
 }
 
-void Viewport::Render() const {
-	glViewport(m_info.winX, m_info.winY, m_info.winWidth, m_info.winHeight);
+bool Viewport::IsDirty() const {
+	if (m_isDirty) { return true; }
 	for (auto layer : m_layers) {
-		if (layer->IsInvalidate()) {
-			layer->Render();
-		}
-	}
-	m_isInvalidate = false;
-}
-
-bool Viewport::IsInvalidate() const {
-	if (m_isInvalidate) { return true; }
-	for (auto layer : m_layers) {
-		if (layer->IsInvalidate()) { return true; }
+		if (layer->IsDirty()) { return true; }
 	}
 	return false;
 }
@@ -67,6 +57,6 @@ void Viewport::Set(const Info &info) {
 void Viewport::SetSize(unsigned int winWidth, unsigned int winHeight) {
 	m_info.winWidth = winWidth;
 	m_info.winHeight = winHeight;
-	m_isInvalidate = true;
+	m_isDirty = true;
 	for (auto layer : m_layers) { layer->onResize(); }
 }
